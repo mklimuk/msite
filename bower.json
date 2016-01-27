@@ -1,0 +1,17 @@
+{
+  "name": "msite",
+  "version": "0.0.0",
+  "authors": [
+    "Michal Klimuk <michal.klimuk@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+  }
+}
