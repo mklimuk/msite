@@ -141,7 +141,7 @@ gulp.task('inject:head', () =>
 gulp.task('inject:footer', () =>
   gulp.src('src/_layouts/default.html')
     .pipe($.inject(gulp.src('.tmp/assets/javascript/*.js',
-                            {read: false}), {ignorePath: '.tmp'}))
+                            {read: false}), {ignorePath: '.tmp', selfClosingTag: true}))
     .pipe(gulp.dest('src/_layouts'))
 );
 
