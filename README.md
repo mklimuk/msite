@@ -1,6 +1,6 @@
 # msite
 
-> South America consulting website
+> South America consulting website based on Jekyll
 
 ## To get started
 
