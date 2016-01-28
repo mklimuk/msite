@@ -15,4 +15,4 @@ before_install:
   - npm install
 script:
   - gulp build
-  - cd s3_website push
+  - s3_website push
