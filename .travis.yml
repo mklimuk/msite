@@ -15,4 +15,4 @@ before_install:
   - npm install
 script:
   - gulp build
-  - bundle exec rake deploy
+  - s3_website push
