@@ -1,0 +1,9 @@
+vendor
+src
+node_modules
+config
+bin
+docker
+.git
+.tmp
+.bundle
