@@ -7,3 +7,13 @@ http:
   dns:
    - 8.8.8.8
    - 8.8.4.4
+
+watch:
+  image: mklimuk/jekyll
+  volumes:
+    - "../:/app"
+  dns:
+   - 8.8.8.8
+   - 8.8.4.4
+  command:
+    "gulp watch"
