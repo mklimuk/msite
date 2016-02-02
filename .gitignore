@@ -64,3 +64,7 @@ dist
 vendor
 
 Gemfile.lock
+
+# Ignore html with injected assets
+src/_includes/head.html
+src/_layouts/default.html
