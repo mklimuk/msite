@@ -9,8 +9,6 @@ const $ = gulpLoadPlugins();
 import del from 'del';
 // Used to run shell commands
 import shell from 'shelljs';
-// 'fs' is used to read files from the system (used for uploading)
-import fs from 'fs';
 // Parallelize the uploads when uploading to Amazon S3
 import parallelize from 'concurrent-transform';
 // BrowserSync is used to live-reload your website
@@ -19,7 +17,10 @@ const reload = browserSync.reload;
 // AutoPrefixer
 import autoprefixer from 'autoprefixer';
 // Yargs for command line arguments
-import {argv} from 'yargs';
+import {
+  argv
+}
+from 'yargs';
 
 // 'gulp clean:assets' -- deletes all assets except for images
 // 'gulp clean:dist' -- erases the dist folder
@@ -42,17 +43,17 @@ gulp.task('clean:metadata', () => {
 // 'gulp jekyll --prod' -- builds your site with production settings
 gulp.task('jekyll', done => {
   if (!argv.prod) {
-    shell.exec('jekyll build');
+    shell.exec('bundle exec jekyll build');
     done();
   } else if (argv.prod) {
-    shell.exec('jekyll build --config _config.yml,_config.build.yml');
+    shell.exec('bundle exec jekyll build --config _config.yml,_config.build.yml');
     done();
   }
 });
 
 // 'gulp doctor' -- literally just runs jekyll doctor
 gulp.task('jekyll:doctor', done => {
-  shell.exec('jekyll doctor');
+  shell.exec('bundle exec jekyll doctor');
   done();
 });
 
@@ -62,34 +63,40 @@ gulp.task('jekyll:doctor', done => {
 // then minifies, gzips and cache busts it. Does not create a Sourcemap
 gulp.task('styles', () =>
   gulp.src('src/assets/scss/style.scss')
-    .pipe($.if(!argv.prod, $.sourcemaps.init()))
-    .pipe($.sass({
-      precision: 10
-    }).on('error', $.sass.logError))
-    .pipe($.postcss([
-      autoprefixer({browsers: 'last 1 version'})
-    ]))
-    .pipe($.size({
-      title: 'styles',
-      showFiles: true
-    }))
-    .pipe($.if(argv.prod, $.rename({suffix: '.min'})))
-    .pipe($.if(argv.prod, $.if('*.css', $.cssnano())))
-    .pipe($.if(argv.prod, $.size({
-      title: 'minified styles',
-      showFiles: true
-    })))
-    .pipe($.if(argv.prod, $.rev()))
-    .pipe($.if(!argv.prod, $.sourcemaps.write('.')))
-    .pipe($.if(argv.prod, gulp.dest('.tmp/assets/stylesheets')))
-    .pipe($.if(argv.prod, $.if('*.css', $.gzip({append: true}))))
-    .pipe($.if(argv.prod, $.size({
-      title: 'gzipped styles',
-      gzip: true,
-      showFiles: true
-    })))
-    .pipe(gulp.dest('.tmp/assets/stylesheets'))
-    .pipe($.if(!argv.prod, browserSync.stream()))
+  .pipe($.if(!argv.prod, $.sourcemaps.init()))
+  .pipe($.sass({
+    precision: 10
+  }).on('error', $.sass.logError))
+  .pipe($.postcss([
+    autoprefixer({
+      browsers: 'last 1 version'
+    })
+  ]))
+  .pipe($.size({
+    title: 'styles',
+    showFiles: true
+  }))
+  .pipe($.if(argv.prod, $.rename({
+    suffix: '.min'
+  })))
+  .pipe($.if(argv.prod, $.if('*.css', $.cssnano())))
+  .pipe($.if(argv.prod, $.size({
+    title: 'minified styles',
+    showFiles: true
+  })))
+  .pipe($.if(argv.prod, $.rev()))
+  .pipe($.if(!argv.prod, $.sourcemaps.write('.')))
+  .pipe($.if(argv.prod, gulp.dest('.tmp/assets/stylesheets')))
+  .pipe($.if(argv.prod, $.if('*.css', $.gzip({
+    append: true
+  }))))
+  .pipe($.if(argv.prod, $.size({
+    title: 'gzipped styles',
+    gzip: true,
+    showFiles: true
+  })))
+  .pipe(gulp.dest('.tmp/assets/stylesheets'))
+  .pipe($.if(!argv.prod, browserSync.stream()))
 );
 
 // 'gulp scripts' -- creates a index.js file from your JavaScript files and
@@ -103,91 +110,125 @@ gulp.task('scripts', () =>
     'src/assets/javascript/vendor.js',
     'src/assets/javascript/main.js'
   ])
-    .pipe($.newer('.tmp/assets/javascript/index.js', {dest: '.tmp/assets/javascript', ext: '.js'}))
-    .pipe($.if(!argv.prod, $.sourcemaps.init()))
-    .pipe($.concat('index.js'))
-    .pipe($.size({
-      title: 'scripts',
-      showFiles: true
-    }))
-    .pipe($.if(argv.prod, $.rename({suffix: '.min'})))
-    .pipe($.if(argv.prod, $.if('*.js', $.uglify({preserveComments: 'some'}))))
-    .pipe($.if(argv.prod, $.size({
-      title: 'minified scripts',
-      showFiles: true
-    })))
-    .pipe($.if(argv.prod, $.rev()))
-    .pipe($.if(!argv.prod, $.sourcemaps.write('.')))
-    .pipe($.if(argv.prod, gulp.dest('.tmp/assets/javascript')))
-    .pipe($.if(argv.prod, $.if('*.js', $.gzip({append: true}))))
-    .pipe($.if(argv.prod, $.size({
-      title: 'gzipped scripts',
-      gzip: true,
-      showFiles: true
-    })))
-    .pipe(gulp.dest('.tmp/assets/javascript'))
-    .pipe($.if(!argv.prod, browserSync.stream()))
+  .pipe($.newer('.tmp/assets/javascript/index.js', {
+    dest: '.tmp/assets/javascript',
+    ext: '.js'
+  }))
+  .pipe($.if(!argv.prod, $.sourcemaps.init()))
+  .pipe($.concat('index.js'))
+  .pipe($.size({
+    title: 'scripts',
+    showFiles: true
+  }))
+  .pipe($.if(argv.prod, $.rename({
+    suffix: '.min'
+  })))
+  .pipe($.if(argv.prod, $.if('*.js', $.uglify({
+    preserveComments: 'some'
+  }))))
+  .pipe($.if(argv.prod, $.size({
+    title: 'minified scripts',
+    showFiles: true
+  })))
+  .pipe($.if(argv.prod, $.rev()))
+  .pipe($.if(!argv.prod, $.sourcemaps.write('.')))
+  .pipe($.if(argv.prod, gulp.dest('.tmp/assets/javascript')))
+  .pipe($.if(argv.prod, $.if('*.js', $.gzip({
+    append: true
+  }))))
+  .pipe($.if(argv.prod, $.size({
+    title: 'gzipped scripts',
+    gzip: true,
+    showFiles: true
+  })))
+  .pipe(gulp.dest('.tmp/assets/javascript'))
+  .pipe($.if(!argv.prod, browserSync.stream()))
 );
 
 // 'gulp inject:head' -- injects our style.css file into the head of our HTML
 gulp.task('inject:head', () =>
   gulp.src('src/_includes/head.html')
-    .pipe($.inject(gulp.src('.tmp/assets/stylesheets/*.css',
-                            {read: false}), {ignorePath: '.tmp', selfClosingTag: true}))
-    .pipe(gulp.dest('src/_includes'))
+  .pipe($.inject(gulp.src('.tmp/assets/stylesheets/*.css', {
+    read: false
+  }), {
+    ignorePath: '.tmp',
+    selfClosingTag: true
+  }))
+  .pipe(gulp.dest('src/_includes'))
 );
 
 // 'gulp inject:footer' -- injects our index.js file into the end of our HTML
 gulp.task('inject:footer', () =>
   gulp.src('src/_layouts/default.html')
-    .pipe($.inject(gulp.src('.tmp/assets/javascript/*.js',
-                            {read: false}), {ignorePath: '.tmp', selfClosingTag: true}))
-    .pipe(gulp.dest('src/_layouts'))
+  .pipe($.inject(gulp.src('.tmp/assets/javascript/*.js', {
+    read: false
+  }), {
+    ignorePath: '.tmp',
+    selfClosingTag: true
+  }))
+  .pipe(gulp.dest('src/_layouts'))
 );
 
 // 'gulp images' -- optimizes and caches your images
 gulp.task('images', () =>
   gulp.src('src/assets/images/**/*')
-    .pipe($.cache($.imagemin({
-      progressive: true,
-      interlaced: true
-    })))
-    .pipe(gulp.dest('.tmp/assets/images'))
-    .pipe($.size({title: 'images'}))
+  .pipe($.cache($.imagemin({
+    progressive: true,
+    interlaced: true
+  })))
+  .pipe(gulp.dest('.tmp/assets/images'))
+  .pipe($.size({
+    title: 'images'
+  }))
 );
 
 // 'gulp fonts' -- copies your fonts to the temporary assets folder
 gulp.task('fonts', () =>
   gulp.src('src/assets/fonts/**/*')
-    .pipe(gulp.dest('.tmp/assets/fonts'))
-    .pipe($.size({title: 'fonts'}))
+  .pipe(gulp.dest('.tmp/assets/fonts'))
+  .pipe($.size({
+    title: 'fonts'
+  }))
 );
 
 // 'gulp html' -- does nothing
 // 'gulp html --prod' -- minifies and gzips our HTML files
 gulp.task('html', () =>
   gulp.src('dist/**/*.html')
-    .pipe($.if(argv.prod, $.htmlmin({
-      removeComments: true,
-      collapseWhitespace: true,
-      collapseBooleanAttributes: true,
-      removeAttributeQuotes: true,
-      removeRedundantAttributes: true
-    })))
-    .pipe($.if(argv.prod, $.size({title: 'optimized HTML'})))
-    .pipe($.if(argv.prod, gulp.dest('dist')))
-    .pipe($.if(argv.prod, $.gzip({append: true})))
-    .pipe($.if(argv.prod, $.size({
-      title: 'gzipped HTML',
-      gzip: true
-    })))
-    .pipe($.if(argv.prod, gulp.dest('dist')))
+  .pipe($.if(argv.prod, $.htmlmin({
+    removeComments: true,
+    collapseWhitespace: true,
+    collapseBooleanAttributes: true,
+    removeAttributeQuotes: true,
+    removeRedundantAttributes: true
+  })))
+  .pipe($.if(argv.prod, $.size({
+    title: 'optimized HTML'
+  })))
+  .pipe($.if(argv.prod, gulp.dest('dist')))
+  .pipe($.if(argv.prod, $.gzip({
+    append: true
+  })))
+  .pipe($.if(argv.prod, $.size({
+    title: 'gzipped HTML',
+    gzip: true
+  })))
+  .pipe($.if(argv.prod, gulp.dest('dist')))
 );
 
 // 'gulp deploy' -- reads from your AWS Credentials file, creates the correct
 // headers for your files and uploads them to S3
 gulp.task('deploy', () => {
-  var credentials = JSON.parse(fs.readFileSync('aws-credentials.json', 'utf8'));
+  // create a new publisher using S3 options
+  // http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#constructor-property
+  var credentials = {
+    region: 'eu-west-1',
+    params: {
+      Bucket: 'southamerica.relations.consulting'
+    },
+    accessKeyId: process.env.S3_ACCESS_ID,
+    secretAccessKey: process.env.S3_ACCESS_SECRET
+  };
   var publisher = $.awspublish.create(credentials);
 
   var headers = {
@@ -245,7 +286,7 @@ gulp.task('assets', gulp.series(
 // done this way because Jekyll overwrites the whole folder otherwise
 gulp.task('assets:copy', () =>
   gulp.src('.tmp/assets/**/*')
-    .pipe(gulp.dest('dist/assets'))
+  .pipe(gulp.dest('dist/assets'))
 );
 
 // 'gulp' -- cleans your assets and gzipped files, creates your assets and
@@ -273,7 +314,7 @@ gulp.task('clean', gulp.series('clean:assets', 'clean:gzip'));
 // 'gulp rebuild' -- WARNING: Erases your assets and built site, use only when
 // you need to do a complete rebuild
 gulp.task('rebuild', gulp.series('clean:dist', 'clean:assets',
-'clean:metadata'));
+  'clean:metadata'));
 
 // 'gulp check' -- checks your Jekyll configuration for errors and lint your JS
 gulp.task('check', gulp.series('jekyll:doctor', 'lint'));
