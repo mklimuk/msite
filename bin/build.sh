@@ -8,6 +8,6 @@ pushd $DIR
 # move to the main folder
 cd ..
 
-docker run --rm --dns 8.8.8.8 --dns 8.8.4.4 -v $(pwd):/app mklimuk/jekyll sh -c 'bundle install --path /app/vendor && npm install -–no-bin-link && gulp build'
+docker run --rm --dns 8.8.8.8 --dns 8.8.4.4 -v $(pwd):/app mklimuk/jekyll sh -c 'bundle install --path /app/vendor && npm install -–no-bin-link && gulp'
 
 popd
