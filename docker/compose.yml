@@ -1,0 +1,9 @@
+http:
+  build: ..
+  ports:
+   - "8031:80"
+  volumes:
+    - "../dist:/usr/share/nginx/html"
+  dns:
+   - 8.8.8.8
+   - 8.8.4.4
