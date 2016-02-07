@@ -19,18 +19,20 @@ import {
 }
 from 'yargs';
 
-// 'gulp clean:assets' -- deletes all assets except for images
+let libs = [
+  'node_modules/jquery/dist/jquery.min.js',
+  'node_modules/skel/index.js'
+];
+
+let src = [
+  'src/assets/javascript/main.js',
+  'src/assets/javascript/libs.js'
+];
+
 // 'gulp clean:dist' -- erases the dist folder
-// 'gulp clean:gzip' -- erases all the gzipped files
 // 'gulp clean:metadata' -- deletes the metadata file for Jekyll
-gulp.task('clean:assets', () => {
-  return del(['.tmp/**/*', '!.tmp/assets', '!.tmp/assets/images', '!.tmp/assets/images/**/*', 'dist/assets']);
-});
 gulp.task('clean:dist', () => {
   return del(['dist/']);
-});
-gulp.task('clean:gzip', () => {
-  return del(['dist/**/*.gz']);
 });
 gulp.task('clean:metadata', () => {
   return del(['src/.jekyll-metadata']);
@@ -73,7 +75,7 @@ gulp.task('styles', () =>
     title: 'css',
     showFiles: true
   }))
-  .pipe(gulp.dest('.tmp/assets/stylesheets')) // write full css version
+  .pipe(gulp.dest('dist/assets/css')) // write full css version
   .pipe($.rename({
     suffix: '.min'
   }))
@@ -84,7 +86,7 @@ gulp.task('styles', () =>
   }))
   .pipe($.rev())
   .pipe($.sourcemaps.write('.'))
-  .pipe(gulp.dest('.tmp/assets/stylesheets')) // write minified css
+  .pipe(gulp.dest('dist/assets/css')) // write minified css
   .pipe($.if('*.css', $.gzip({
     append: true
   })))
@@ -93,36 +95,40 @@ gulp.task('styles', () =>
     gzip: true,
     showFiles: true
   }))
-  .pipe(gulp.dest('.tmp/assets/stylesheets')) // write gzipped css
+  .pipe(gulp.dest('dist/assets/css')) // write gzipped css
+);
+
+// 'gulp libs' -- concatenates libs into one file
+gulp.task('libs', () =>
+    gulp.src(libs)
+    .pipe($.concat('libs.js'))
+    .pipe(gulp.dest('src/assets/javascript'))
 );
 
 // 'gulp scripts' -- creates a index.js file from your JavaScript files and
 // creates a Sourcemap for it
 // 'gulp scripts --prod' -- creates a index.js file from your JavaScript files,
 // minifies, gzips and cache busts it. Does not create a Sourcemap
-gulp.task('scripts', () =>
+gulp.task('scripts', gulp.series('libs', () =>
   // NOTE: The order here is important since it's concatenated in order from
   // top to bottom, so you want vendor scripts etc on top
-  gulp.src([
-    'src/assets/javascript/vendor.js',
-    'src/assets/javascript/main.js'
-  ])
-  .pipe($.newer('.tmp/assets/javascript/index.js', {
-    dest: '.tmp/assets/javascript',
+  gulp.src(src)
+  .pipe($.newer('dist/assets/js/app.js', {
+    dest: 'dist/assets/js',
     ext: '.js'
   }))
   .pipe($.sourcemaps.init())
-  .pipe($.concat('index.js'))
+  .pipe($.concat('app.js'))
   .pipe($.size({
     title: 'javascript',
     showFiles: true
   }))
-  .pipe(gulp.dest('.tmp/assets/javascript')) // write regular js
+  .pipe(gulp.dest('dist/assets/js')) // write regular js
   .pipe($.rename({
     suffix: '.min'
   }))
   .pipe($.if('*.js', $.uglify({
-    preserveComments: 'some'
+    preserveComments: false
   })))
   .pipe($.size({
     title: 'minified javascript',
@@ -130,7 +136,7 @@ gulp.task('scripts', () =>
   }))
   .pipe($.rev())
   .pipe($.sourcemaps.write('.'))
-  .pipe(gulp.dest('.tmp/assets/javascript'))
+  .pipe(gulp.dest('dist/assets/js'))
   .pipe($.if('*.js', $.gzip({
     append: true
   })))
@@ -139,33 +145,31 @@ gulp.task('scripts', () =>
     gzip: true,
     showFiles: true
   }))
-  .pipe(gulp.dest('.tmp/assets/javascript'))
-);
+  .pipe(gulp.dest('dist/assets/js'))
+));
 
 // 'gulp inject:head' -- injects our style.css file into the head of our HTML
 gulp.task('inject:head', () =>
-  gulp.src('src/_includes/head.tmp.html')
-  .pipe($.rename('head.html'))
-  .pipe($.inject(gulp.src('.tmp/assets/stylesheets/*.min.css', {
+  gulp.src('dist/**/*.html')
+  .pipe($.inject(gulp.src('dist/assets/css/*.min.css', {
     read: false
   }), {
-    ignorePath: '.tmp',
+    ignorePath: 'dist',
     selfClosingTag: true
   }))
-  .pipe(gulp.dest('src/_includes'))
+  .pipe(gulp.dest('dist'))
 );
 
 // 'gulp inject:footer' -- injects our index.js file into the end of our HTML
 gulp.task('inject:footer', () =>
-  gulp.src('src/_layouts/default.tmp.html')
-  .pipe($.rename('default.html'))
-  .pipe($.inject(gulp.src('.tmp/assets/javascript/*.min.js', {
+  gulp.src('dist/**/*.html')
+  .pipe($.inject(gulp.src('dist/assets/js/*.min.js', {
     read: false
   }), {
-    ignorePath: '.tmp',
+    ignorePath: 'dist',
     selfClosingTag: true
   }))
-  .pipe(gulp.dest('src/_layouts'))
+  .pipe(gulp.dest('dist'))
 );
 
 // 'gulp images' -- optimizes and caches your images
@@ -175,7 +179,7 @@ gulp.task('images', () =>
     progressive: true,
     interlaced: true
   })))
-  .pipe(gulp.dest('.tmp/assets/images'))
+  .pipe(gulp.dest('dist/assets/images'))
   .pipe($.size({
     title: 'images'
   }))
@@ -184,14 +188,13 @@ gulp.task('images', () =>
 // 'gulp fonts' -- copies your fonts to the temporary assets folder
 gulp.task('fonts', () =>
   gulp.src('src/assets/fonts/**/*')
-  .pipe(gulp.dest('.tmp/assets/fonts'))
+  .pipe(gulp.dest('dist/assets/fonts'))
   .pipe($.size({
     title: 'fonts'
   }))
 );
 
-// 'gulp html' -- does nothing
-// 'gulp html --prod' -- minifies and gzips our HTML files
+// 'gulp html' -- minifies and gzips our HTML files
 gulp.task('html', () =>
   gulp.src('dist/**/*.html')
   .pipe($.rename({
@@ -249,8 +252,8 @@ gulp.task('deploy', () => {
 gulp.task('lint', () =>
   gulp.src([
     'gulpfile.babel.js',
-    '.tmp/assets/javascript/*.js',
-    '!.tmp/assets/javascript/*.min.js'
+    'dist/assets/js/*.js',
+    '!dist/assets/js/*.min.js'
   ])
   .pipe($.eslint())
   .pipe($.eslint.formatEach())
@@ -262,43 +265,35 @@ gulp.task('lint', () =>
 gulp.task('watch', () => {
   $.livereload.listen();
   // Watch various files for changes and do the needful
-  gulp.watch(['src/**/*.md', 'src/**/*.html', 'src/**/*.yml'], gulp.series('jekyll'));
-  gulp.watch(['src/**/*.xml', 'src/**/*.txt'], gulp.series('jekyll'));
-  gulp.watch('src/assets/javascript/**/*.js', gulp.series('scripts'));
-  gulp.watch('src/assets/scss/**/*.scss', gulp.series('styles'));
-  gulp.watch('src/assets/images/**/*', gulp.series('images'));
+  gulp.watch(['src/**/*.md', 'src/**/*.html', 'src/**/*.yml'], gulp.series('jekyll', 'assets:copy', 'html'));
+  gulp.watch(['src/**/*.xml', 'src/**/*.txt'], gulp.series('jekyll', 'assets:copy'));
+  gulp.watch('src/assets/javascript/**/*.js', gulp.series('scripts', 'assets:copy'));
+  gulp.watch('src/assets/scss/**/*.scss', gulp.series('styles', 'assets:copy'));
+  gulp.watch('src/assets/images/**/*', gulp.series('images', 'assets:copy'));
 });
 
 // 'gulp assets' -- cleans out your assets and rebuilds them
-// 'gulp assets --prod' -- cleans out your assets and rebuilds them with
-// production settings
-gulp.task('assets', gulp.series(
-  gulp.series('clean:assets'),
+gulp.task('assets',
   gulp.parallel('styles', 'scripts', 'fonts', 'images')
-));
+);
 
 // 'gulp assets:copy' -- copies the assets into the dist folder, needs to be
 // done this way because Jekyll overwrites the whole folder otherwise
 gulp.task('assets:copy', () =>
-  gulp.src('.tmp/assets/**/*')
+  gulp.src('dist/assets/**/*')
   .pipe(gulp.dest('dist/assets'))
 );
 
-// 'gulp build' -- same as 'gulp' but doesn't serve your site in your browser
-// 'gulp build --prod' -- same as above but with production settings
+// 'gulp build' -- same as above but with production settings
 gulp.task('build', gulp.series(
-  gulp.series('clean:assets', 'clean:gzip'),
-  gulp.series('assets', 'inject:head', 'inject:footer'),
-  gulp.series('jekyll', 'assets:copy', 'html')
-));
+  'jekyll', 'assets', 'inject:head', 'inject:footer', 'html'));
 
 // 'gulp clean' -- erases your assets and gzipped files
-gulp.task('clean', gulp.series('clean:assets', 'clean:gzip'));
+gulp.task('clean', gulp.series('clean:dist', 'clean:metadata'));
 
 // 'gulp rebuild' -- WARNING: Erases your assets and built site, use only when
 // you need to do a complete rebuild
-gulp.task('rebuild', gulp.series('clean:dist', 'clean:assets',
-  'clean:metadata'));
+gulp.task('rebuild', gulp.series('clean', 'build'));
 
 // 'gulp check' -- checks your Jekyll configuration for errors and lint your JS
 gulp.task('check', gulp.series('jekyll:doctor', 'lint'));
@@ -306,4 +301,4 @@ gulp.task('check', gulp.series('jekyll:doctor', 'lint'));
 // 'gulp' -- cleans your assets and gzipped files, creates your assets and
 // injects them into the templates, then builds your site, copied the assets
 // into their directory
-gulp.task('default', gulp.series('clean', 'build'));
+gulp.task('default', gulp.series('rebuild'));
